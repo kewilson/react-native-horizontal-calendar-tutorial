@@ -3,48 +3,48 @@
 "use strict";
 
 import React from 'react';
+
 import {
     StyleSheet,
     StatusBar,
     View,
 } from 'react-native';
-import faker from 'faker';
-import moment from 'moment';
+
 import Calendar from './src/calendar/Calendar';
 import Events from './src/events/Events';
 import type Moment from 'moment';
 
+import { getEvents } from './src/calendar/gcal'
+
 export type EventType = {
     date: Moment,
+    start: Moment,
+    end: Moment,
     title: string,
     description: string,
     image: string,
 };
 
-// Generate fake event data
-const FAKE_EVENTS: Array<EventType> = (() => {
-    const startDay = moment().subtract(5, 'days').startOf('day');
-    return [...new Array(64)].map(_ => ({
-        date: startDay.add(4, 'hours').clone(),
-        title: faker.company.companyName(),
-        description: faker.lorem.sentence(),
-        // use random dimensions to get random urls
-        image: faker.image.nightlife(Math.floor(Math.random() * 200) + 100, Math.floor(Math.random() * 200) + 100),
-    }));
-})();
-
 // Filter events by date
-const filterEvents = (date: Moment): ?Array<EventType> =>
-    FAKE_EVENTS.filter(event => event.date.isSame(date, 'day'));
+const filterEvents = (date: Moment, events): ?Array<EventType> =>
+    events.filter(event => event.date.isSame(date, 'day'));
 
 export default class App extends React.Component {
 
-    state = {
-        events: filterEvents(moment()),
-    };
+    constructor () {
+        super();
+        this.state = {
+            events: []
+        };
+    }
+    componentDidMount () {
+        getEvents((events) => {
+            this.setState({events});
+        });
+    }
 
     onSelectDate = (date: Moment) => {
-        this.setState({events: filterEvents(date)});
+        this.setState({events: filterEvents(date, this.state.events)});
     };
 
     render() {
